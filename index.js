@@ -1,40 +1,35 @@
 const express = require("express");
 const axios = require("axios");
-const convert = require("xml-js");
+const xml2json = require("xml2js");
 
 const app = express();
 
-let notes = [{ kakka: "pillu" }];
-
-app.get("/", (req, res) => {
-  const request = axios.get("https://assignments.reaktor.com/birdnest/drones");
+app.get("/api/:sn", (req, res) => {
+  const serialNumber = req.params.sn
+  const request = axios.get(
+    `https://assignments.reaktor.com/birdnest/pilots/${serialNumber}`
+  );
   request
     .then((response) => {
-      const converted = convert.xml2json(response.data, {
-        compact: false,
-        space: 2,
-      });
-      res.json(JSON.parse(converted));
+      res.json(response.data);
     })
     .catch((error) => {
       console.log(error);
     });
 });
 
-app.get("/:id", (req, res) => {
-    const request = axios.get("https://assignments.reaktor.com/birdnest/drones");
-    request
-      .then((response) => {
-        const converted = convert.xml2json(response.data, {
-          compact: false,
-          space: 2,
-        });
-        res.json(JSON.parse(converted));
-      })
-      .catch((error) => {
-        console.log(error);
+app.get("/api", (req, res) => {
+  const request = axios.get("https://assignments.reaktor.com/birdnest/drones");
+  request
+    .then((response) => {
+      xml2json.parseString(response.data, (error, result) => {
+        res.json(result);
       });
-  });
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+});
 
 const unknownEndpoint = (request, response) => {
   response.status(404).send({ error: "unknown endpoint" });
